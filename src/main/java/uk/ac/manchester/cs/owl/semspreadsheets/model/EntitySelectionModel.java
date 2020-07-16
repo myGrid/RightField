@@ -9,6 +9,7 @@ package uk.ac.manchester.cs.owl.semspreadsheets.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.model.OWLEntity;
@@ -34,8 +35,10 @@ public class EntitySelectionModel {
     private ValidationType validationType = ValidationType.FREETEXT; 
     
     private OWLPropertyItem owlPropertyItem;
-    
-    private boolean allowSelectionEvents = true;
+
+	private List<Term> terms;
+
+	private boolean allowSelectionEvents = true;
 
 	private List<EntitySelectionModelListener> listeners = new ArrayList<EntitySelectionModelListener>();		
 
@@ -53,7 +56,8 @@ public class EntitySelectionModel {
         else {
             this.selectedEntity = entity;            
         }
-        logger.debug("Set selected entity to "+selectedEntity.getIRI().toString());
+        terms = null;
+		logger.debug("Set selected entity to "+selectedEntity.getIRI().toString());
         if (oldEntity==null ? selectedEntity!=null : !oldEntity.equals(selectedEntity)) {
         	fireSelectedEntityChanged();        	        
         }        
@@ -79,9 +83,19 @@ public class EntitySelectionModel {
 	public void setOWLPropertyItem(OWLPropertyItem owlPropertyItem) {
 		OWLPropertyItem oldItem = this.owlPropertyItem;
 		this.owlPropertyItem = owlPropertyItem;
+		this.terms = null;
 		if (oldItem==null ? this.owlPropertyItem!=null : !oldItem.equals(this.owlPropertyItem)) {
 			fireOWLPropertyChanged();			
 		}		
+	}
+
+	public List<Term> getTerms() { return terms; }
+
+	public void setTerms(List<Term> terms) {
+		if (!Objects.equals(terms, this.terms)) {
+			this.terms = terms;
+			fireTermsChanged();
+		}
 	}
     
     public void clearSelection() {
@@ -129,6 +143,15 @@ public class EntitySelectionModel {
 
 				listener.validationTypeChanged(validationType);
 
+			}
+		}
+	}
+
+	protected void fireTermsChanged() {
+		if (allowSelectionEvents) {
+			for (EntitySelectionModelListener listener : new ArrayList<EntitySelectionModelListener>(
+					listeners)) {
+				listener.termsChanged(terms);
 			}
 		}
 	}
